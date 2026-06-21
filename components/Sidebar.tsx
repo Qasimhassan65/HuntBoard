@@ -17,7 +17,7 @@ const navItems = [
 
 export function Sidebar() {
   const pathname = usePathname();
-  const { user, setAuthModalOpen } = useStore();
+  const { user, setAuthModalOpen, isAuthLoading } = useStore();
 
   const handleSignIn = () => {
     setAuthModalOpen(true);
@@ -61,7 +61,12 @@ export function Sidebar() {
       </nav>
 
       <div className="p-4 border-t border-border">
-        {user && !user.isAnonymous ? (
+        {isAuthLoading ? (
+          <div className="animate-pulse flex items-center gap-3 px-3 py-2">
+            <div className="w-8 h-8 rounded-full bg-surface-alt"></div>
+            <div className="h-4 bg-surface-alt rounded w-24"></div>
+          </div>
+        ) : user && !user.isAnonymous ? (
           <div className="flex flex-col gap-2">
             <div className="flex items-center gap-2 px-3 py-2">
               <div className="w-8 h-8 rounded-full bg-accent text-white flex items-center justify-center text-xs font-bold">
