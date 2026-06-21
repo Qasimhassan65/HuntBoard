@@ -1,6 +1,6 @@
 "use client";
 
-import { Mail, Link as LinkIcon, MoreHorizontal, UserPlus } from "lucide-react";
+import { Mail, Link as LinkIcon, MoreHorizontal, UserPlus, Trash2 } from "lucide-react";
 
 import { useStore } from "@/store/useStore";
 
@@ -89,14 +89,40 @@ export default function NetworkingPage() {
                 </td>
                 <td className="p-4 text-right">
                   <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button className="p-1.5 text-text-muted hover:text-accent rounded-md hover:bg-accent/10 transition-colors">
-                      <Mail className="w-4 h-4" />
-                    </button>
-                    <button className="p-1.5 text-text-muted hover:text-[#0a66c2] rounded-md hover:bg-[#0a66c2]/10 transition-colors">
-                      <LinkIcon className="w-4 h-4" />
-                    </button>
-                    <button className="p-1.5 text-text-muted hover:text-text-primary rounded-md hover:bg-surface-alt transition-colors">
-                      <MoreHorizontal className="w-4 h-4" />
+                    {contact.email && (
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigator.clipboard.writeText(contact.email!);
+                        }}
+                        title="Copy Email"
+                        className="p-1.5 text-text-muted hover:text-accent rounded-md hover:bg-accent/10 transition-colors"
+                      >
+                        <Mail className="w-4 h-4" />
+                      </button>
+                    )}
+                    {contact.linkedinUrl && (
+                      <a 
+                        href={contact.linkedinUrl.startsWith('http') ? contact.linkedinUrl : `https://${contact.linkedinUrl}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                        className="p-1.5 text-text-muted hover:text-[#0a66c2] rounded-md hover:bg-[#0a66c2]/10 transition-colors"
+                      >
+                        <LinkIcon className="w-4 h-4" />
+                      </a>
+                    )}
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (window.confirm("Are you sure you want to delete this contact?")) {
+                          useStore.getState().deleteContact(contact.id);
+                        }
+                      }}
+                      title="Delete Contact"
+                      className="p-1.5 text-text-muted hover:text-danger rounded-md hover:bg-danger/10 transition-colors"
+                    >
+                      <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
                 </td>

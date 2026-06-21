@@ -3,48 +3,86 @@
 import { useStore } from "@/store/useStore";
 import { X } from "lucide-react";
 import { useForm } from "react-hook-form";
+import { useEffect } from "react";
 
 type ContactFormData = {
   name: string;
   title: string;
   company: string;
+  email: string;
   linkedinUrl: string;
   status: string;
   type: string;
 };
 
 export function AddContactModal() {
-  const { isAddContactModalOpen, setAddContactModalOpen, contacts, setContacts } = useStore();
-  const { register, handleSubmit, reset } = useForm<ContactFormData>();
+  const { isAddContactModalOpen, setAddContactModalOpen, contacts, setContacts, selectedContact, updateContact } = useStore();
+  const { register, handleSubmit, reset, setValue } = useForm<ContactFormData>();
+
+  // Populate form if we are editing an existing contact
+  useEffect(() => {
+    if (isAddContactModalOpen && selectedContact) {
+      setValue("name", selectedContact.name || "");
+      setValue("title", selectedContact.title || "");
+      setValue("company", selectedContact.company || "");
+      setValue("email", selectedContact.email || "");
+      setValue("linkedinUrl", selectedContact.linkedinUrl || "");
+      setValue("status", selectedContact.status || "Identified");
+      setValue("type", selectedContact.type || "Recruiter");
+    } else if (isAddContactModalOpen) {
+      reset();
+    }
+  }, [isAddContactModalOpen, selectedContact, setValue, reset]);
 
   if (!isAddContactModalOpen) return null;
 
   const handleClose = () => {
     reset();
-    setAddContactModalOpen(false);
+    // When closing, if we were editing, we should clear the selected contact from the modal state.
+    // The drawer might still be open behind it, but we let useStore handle that.
+    setAddContactModalOpen(false, null);
   };
 
   const onSubmit = (data: ContactFormData) => {
-    const newContact = {
-      id: Math.random().toString(36).substring(2, 9),
-      name: data.name,
-      title: data.title,
-      company: data.company,
-      linkedinUrl: data.linkedinUrl, // Optional property, depending on interface
-      status: data.status || "Identified",
-      type: data.type || "Recruiter",
-      lastContact: new Date().toISOString().split("T")[0], // Today's date (YYYY-MM-DD)
-    };
-
-    setContacts([...contacts, newContact]);
+    if (selectedContact) {
+      // Edit mode
+      updateContact({
+        ...selectedContact,
+        name: data.name,
+        title: data.title,
+        company: data.company,
+        email: data.email,
+        linkedinUrl: data.linkedinUrl,
+        status: data.status,
+        type: data.type,
+      });
+    } else {
+      // Add mode
+      const newContact = {
+        id: Math.random().toString(36).substring(2, 9),
+        name: data.name,
+        title: data.title,
+        company: data.company,
+        email: data.email,
+        linkedinUrl: data.linkedinUrl,
+        status: data.status || "Identified",
+        type: data.type || "Recruiter",
+        lastContact: new Date().toISOString().split("T")[0],
+        notes: [],
+      };
+      setContacts([...contacts, newContact]);
+    }
+    
     handleClose();
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
       <div className="bg-surface border border-border w-full max-w-md rounded-xl shadow-2xl flex flex-col max-h-[90vh]">
         <div className="p-5 border-b border-border flex justify-between items-center">
-          <h2 className="text-xl font-semibold text-text-primary">Add Contact</h2>
+          <h2 className="text-xl font-semibold text-text-primary">
+            {selectedContact ? "Edit Contact" : "Add Contact"}
+          </h2>
           <button onClick={handleClose} className="text-text-secondary hover:text-text-primary transition-colors">
             <X className="w-5 h-5" />
           </button>
@@ -65,8 +103,12 @@ export function AddContactModal() {
               <input {...register("company")} className="w-full bg-surface border border-border rounded-md px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-accent" />
             </div>
             <div>
+              <label className="block text-xs font-medium text-text-secondary mb-1">Email Address</label>
+              <input type="email" {...register("email")} className="w-full bg-surface border border-border rounded-md px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-accent" />
+            </div>
+            <div>
               <label className="block text-xs font-medium text-text-secondary mb-1">LinkedIn URL</label>
-              <input {...register("linkedinUrl")} className="w-full bg-surface border border-border rounded-md px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-accent" />
+              <input type="url" {...register("linkedinUrl")} className="w-full bg-surface border border-border rounded-md px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-accent" />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
@@ -97,7 +139,7 @@ export function AddContactModal() {
             Cancel
           </button>
           <button form="add-contact-form" type="submit" className="bg-accent hover:bg-accent-hover text-white px-6 py-2 rounded-md text-sm font-medium transition-colors">
-            Save Contact
+            {selectedContact ? "Save Changes" : "Save Contact"}
           </button>
         </div>
       </div>

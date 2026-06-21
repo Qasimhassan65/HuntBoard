@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useStore } from "@/store/useStore";
 import { X, Wand2, Loader2 } from "lucide-react";
 import { useForm } from "react-hook-form";
@@ -16,15 +16,30 @@ type JobFormData = {
   salaryRange: string;
   source: string;
   jobUrl: string;
+  status: string;
 };
 
 export function AddJobModal() {
-  const { isAddJobModalOpen, setAddJobModalOpen, jobs, setJobs } = useStore();
+  const { isAddJobModalOpen, setAddJobModalOpen, jobs, setJobs, selectedJob, updateJob } = useStore();
   const [enrichmentInput, setEnrichmentInput] = useState("");
   const [isEnriching, setIsEnriching] = useState(false);
   const [error, setError] = useState("");
   
   const { register, handleSubmit, setValue, reset } = useForm<JobFormData>();
+
+  // Populate form if we are editing an existing job
+  useEffect(() => {
+    if (isAddJobModalOpen && selectedJob) {
+      setValue("companyName", selectedJob.companyName || "");
+      // Mock other fields that aren't fully tracked yet to prevent undefined
+      setValue("jobTitle", selectedJob.jobTitle || "");
+      setValue("techStack", selectedJob.techStack?.join(", ") || "");
+      setValue("country", selectedJob.countryFlag || "");
+      setValue("status", selectedJob.status || "Wishlist");
+    } else if (isAddJobModalOpen) {
+      reset();
+    }
+  }, [isAddJobModalOpen, selectedJob, setValue, reset]);
 
   if (!isAddJobModalOpen) return null;
 
@@ -32,7 +47,7 @@ export function AddJobModal() {
     reset();
     setEnrichmentInput("");
     setError("");
-    setAddJobModalOpen(false);
+    setAddJobModalOpen(false, null);
   };
 
   const handleEnrich = async () => {
@@ -75,55 +90,72 @@ export function AddJobModal() {
   };
 
   const onSubmit = (data: JobFormData) => {
-    console.log("Saving job:", data);
-    const newJob = {
-      id: Date.now().toString(),
-      companyName: data.companyName,
-      jobTitle: data.jobTitle,
-      status: "Wishlist", // Default to Wishlist column
-      techStack: data.techStack ? data.techStack.split(",").map(t => t.trim()).filter(Boolean) : [],
-      dateApplied: new Date().toLocaleDateString()
-    };
-    
-    setJobs([...jobs, newJob]);
+    if (selectedJob) {
+      updateJob({
+        ...selectedJob,
+        companyName: data.companyName,
+        jobTitle: data.jobTitle,
+        status: data.status,
+        techStack: data.techStack ? data.techStack.split(",").map(t => t.trim()).filter(Boolean) : [],
+        countryFlag: data.country
+      });
+    } else {
+      const newJob = {
+        id: Date.now().toString(),
+        companyName: data.companyName,
+        jobTitle: data.jobTitle,
+        status: data.status || "Wishlist", // Default to Wishlist column
+        techStack: data.techStack ? data.techStack.split(",").map(t => t.trim()).filter(Boolean) : [],
+        dateApplied: new Date().toLocaleDateString(),
+        countryFlag: data.country,
+        notes: ""
+      };
+      
+      setJobs([...jobs, newJob]);
+    }
     handleClose();
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
       <div className="bg-surface border border-border w-full max-w-2xl rounded-xl shadow-2xl flex flex-col max-h-[90vh]">
         <div className="p-5 border-b border-border flex justify-between items-center">
-          <h2 className="text-xl font-semibold text-text-primary">Add New Application</h2>
+          <h2 className="text-xl font-semibold text-text-primary">
+            {selectedJob ? "Edit Job Details" : "Add New Application"}
+          </h2>
           <button onClick={handleClose} className="text-text-secondary hover:text-text-primary transition-colors">
             <X className="w-5 h-5" />
           </button>
         </div>
 
         <div className="p-5 overflow-y-auto">
-          {/* AI Auto-fill section */}
-          <div className="mb-6 p-4 bg-surface-alt rounded-lg border border-border-active">
-            <label className="block text-sm font-medium text-text-secondary mb-2">
-              Auto-fill with AI (Paste URL or Description)
-            </label>
-            <div className="flex gap-2">
-              <textarea
-                placeholder="Paste Job URL or the full job description here..."
-                className="flex-1 bg-surface border border-border rounded-md px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-accent min-h-[42px] max-h-[120px] resize-y"
-                value={enrichmentInput}
-                onChange={(e) => setEnrichmentInput(e.target.value)}
-                rows={1}
-              />
-              <button
-                onClick={handleEnrich}
-                disabled={isEnriching || !enrichmentInput}
-                className="bg-accent/10 hover:bg-accent/20 text-accent px-4 py-2 rounded-md font-medium text-sm flex items-center gap-2 disabled:opacity-50 transition-colors"
-              >
-                {isEnriching ? <Loader2 className="w-4 h-4 animate-spin" /> : <Wand2 className="w-4 h-4" />}
-                Extract
-              </button>
+          {/* AI Auto-fill section - hide when editing */}
+          {!selectedJob && (
+            <div className="mb-6 p-4 bg-surface-alt rounded-lg border border-border-active">
+              <label className="block text-sm font-medium text-text-secondary mb-2">
+                Auto-fill with AI (Paste URL or Description)
+              </label>
+              <div className="flex gap-2">
+                <textarea
+                  placeholder="Paste Job URL or the full job description here..."
+                  className="flex-1 bg-surface border border-border rounded-md px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-accent min-h-[42px] max-h-[120px] resize-y"
+                  value={enrichmentInput}
+                  onChange={(e) => setEnrichmentInput(e.target.value)}
+                  rows={1}
+                />
+                <button
+                  type="button"
+                  onClick={handleEnrich}
+                  disabled={isEnriching || !enrichmentInput}
+                  className="bg-accent/10 hover:bg-accent/20 text-accent px-4 py-2 rounded-md font-medium text-sm flex items-center gap-2 disabled:opacity-50 transition-colors"
+                >
+                  {isEnriching ? <Loader2 className="w-4 h-4 animate-spin" /> : <Wand2 className="w-4 h-4" />}
+                  Extract
+                </button>
+              </div>
+              {error && <p className="text-danger text-xs mt-2">{error}</p>}
             </div>
-            {error && <p className="text-danger text-xs mt-2">{error}</p>}
-          </div>
+          )}
 
           <form id="add-job-form" onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
@@ -134,6 +166,14 @@ export function AddJobModal() {
               <div>
                 <label className="block text-xs font-medium text-text-secondary mb-1">Job Title *</label>
                 <input required {...register("jobTitle")} className="w-full bg-surface border border-border rounded-md px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-accent" />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-text-secondary mb-1">Status</label>
+                <select {...register("status")} className="w-full bg-surface border border-border rounded-md px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-accent">
+                  {useStore.getState().jobColumns.map(col => (
+                    <option key={col} value={col}>{col}</option>
+                  ))}
+                </select>
               </div>
               <div>
                 <label className="block text-xs font-medium text-text-secondary mb-1">Location / Country</label>
@@ -168,7 +208,7 @@ export function AddJobModal() {
             Cancel
           </button>
           <button form="add-job-form" type="submit" className="bg-accent hover:bg-accent-hover text-white px-6 py-2 rounded-md text-sm font-medium transition-colors">
-            Save Job
+            {selectedJob ? "Save Changes" : "Save Job"}
           </button>
         </div>
       </div>

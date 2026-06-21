@@ -79,19 +79,23 @@ export default function JobDrawer() {
               <div>
                 <h3 className="text-sm font-semibold text-text-secondary uppercase tracking-wider mb-4">Pipeline Status</h3>
                 <div className="space-y-4 relative before:absolute before:inset-0 before:ml-2.5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-border before:to-transparent">
-                  {["Wishlist", "Applied", "Interviewing", "Tech Test", "Offer"].map((status, index) => {
+                  {useStore.getState().jobColumns.map((status, index) => {
                     const isCurrent = selectedJob.status === status;
-                    const isPast = ["Wishlist", "Applied", "Interviewing", "Tech Test", "Offer"].indexOf(selectedJob.status) > index;
+                    const isPast = useStore.getState().jobColumns.indexOf(selectedJob.status) > index;
                     
                     return (
-                      <div key={status} className="relative flex items-center gap-4">
-                        <div className={`w-5 h-5 rounded-full flex items-center justify-center z-10 
+                      <div 
+                        key={status} 
+                        onClick={() => useStore.getState().updateJob({ ...selectedJob, status })}
+                        className="relative flex items-center gap-4 cursor-pointer group"
+                      >
+                        <div className={`w-5 h-5 rounded-full flex items-center justify-center z-10 transition-colors
                           ${isCurrent ? 'bg-accent border-4 border-surface shadow-[0_0_0_2px_theme(colors.accent)]' : 
-                            isPast ? 'bg-success' : 'bg-surface-alt border border-border'}`}
+                            isPast ? 'bg-success group-hover:bg-success/80' : 'bg-surface-alt border border-border group-hover:border-accent/50'}`}
                         >
                           {isPast && <div className="w-2 h-2 rounded-full bg-white" />}
                         </div>
-                        <div className={`text-sm ${isCurrent ? 'font-bold text-text-primary' : 'text-text-muted'}`}>
+                        <div className={`text-sm transition-colors ${isCurrent ? 'font-bold text-text-primary' : 'text-text-muted group-hover:text-text-primary'}`}>
                           {status}
                         </div>
                       </div>
@@ -102,8 +106,18 @@ export default function JobDrawer() {
 
               {/* Notes Section */}
               <div>
-                <h3 className="text-sm font-semibold text-text-secondary uppercase tracking-wider mb-4">Notes & Preparation</h3>
+                <h3 className="text-sm font-semibold text-text-secondary uppercase tracking-wider mb-4 flex justify-between items-center">
+                  Notes & Preparation
+                  <span className="text-xs text-text-muted lowercase tracking-normal font-normal">Auto-saves</span>
+                </h3>
                 <textarea 
+                  value={selectedJob.notes || ""}
+                  onChange={(e) => {
+                    useStore.getState().updateJob({
+                      ...selectedJob,
+                      notes: e.target.value
+                    });
+                  }}
                   className="w-full h-32 bg-surface-alt border border-border rounded-lg p-3 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent resize-none transition-colors"
                   placeholder="Add interview notes, research, or questions for the team..."
                 />
@@ -119,10 +133,23 @@ export default function JobDrawer() {
               >
                 <Trash2 className="w-5 h-5" />
               </button>
-              <button className="flex-1 bg-surface border border-border text-text-primary hover:border-accent px-4 py-2 rounded-md font-medium transition-colors text-sm">
+              <button 
+                onClick={() => useStore.getState().setAddJobModalOpen(true, selectedJob)}
+                className="flex-1 bg-surface border border-border text-text-primary hover:border-accent hover:bg-accent/5 px-4 py-2 rounded-md font-medium transition-colors text-sm"
+              >
                 Edit Details
               </button>
-              <button className="flex-1 bg-accent hover:bg-accent-hover text-white px-4 py-2 rounded-md font-medium transition-colors text-sm">
+              <button 
+                onClick={() => {
+                  const columns = useStore.getState().jobColumns;
+                  const currentIndex = columns.indexOf(selectedJob.status);
+                  if (currentIndex < columns.length - 1) {
+                    useStore.getState().updateJob({ ...selectedJob, status: columns[currentIndex + 1] });
+                  }
+                }}
+                disabled={useStore.getState().jobColumns.indexOf(selectedJob.status) === useStore.getState().jobColumns.length - 1}
+                className="flex-1 bg-accent hover:bg-accent-hover text-white px-4 py-2 rounded-md font-medium transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+              >
                 Move to Next Stage
               </button>
             </div>
