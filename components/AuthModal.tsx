@@ -36,7 +36,17 @@ export function AuthModal() {
       setError("");
       setIsLoading(true);
       if (auth.currentUser?.isAnonymous) {
-        await linkWithPopup(auth.currentUser, googleProvider);
+        try {
+          await linkWithPopup(auth.currentUser, googleProvider);
+        } catch (linkErr: any) {
+          if (linkErr.code === "auth/credential-already-in-use") {
+            // If the Google account already exists, we can't link it to the anonymous account.
+            // We just log them into their existing Google account instead.
+            await signInWithPopup(auth, googleProvider);
+          } else {
+            throw linkErr; // Re-throw if it's a different error
+          }
+        }
       } else {
         await signInWithPopup(auth, googleProvider);
       }
