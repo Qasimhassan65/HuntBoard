@@ -54,7 +54,7 @@ interface AppState {
   updateContact: (updatedContact: Contact) => void;
   deleteContact: (id: string) => void;
   setAuthLoading: (loading: boolean) => void;
-  setAddJobModalOpen: (isOpen: boolean) => void;
+  setAddJobModalOpen: (isOpen: boolean, job?: Job | null) => void;
   setJobDrawerOpen: (isOpen: boolean, job?: Job | null) => void;
   setAddContactModalOpen: (isOpen: boolean, contact?: Contact | null) => void;
   setContactDrawerOpen: (isOpen: boolean, contact?: Contact | null) => void;
