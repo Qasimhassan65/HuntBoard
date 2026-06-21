@@ -9,7 +9,9 @@ import {
   createUserWithEmailAndPassword, 
   signInWithEmailAndPassword,
   EmailAuthProvider,
-  linkWithCredential
+  linkWithCredential,
+  signInWithCredential,
+  GoogleAuthProvider
 } from "firebase/auth";
 import { X, Mail, Lock, Loader2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -21,6 +23,7 @@ export function AuthModal() {
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const [forceSignIn, setForceSignIn] = useState(false);
 
   if (!isAuthModalOpen) return null;
 
@@ -35,25 +38,34 @@ export function AuthModal() {
     try {
       setError("");
       setIsLoading(true);
-      if (auth.currentUser?.isAnonymous) {
+      if (auth.currentUser?.isAnonymous && !forceSignIn) {
         try {
           await linkWithPopup(auth.currentUser, googleProvider);
+          handleClose();
         } catch (linkErr: any) {
           if (linkErr.code === "auth/credential-already-in-use") {
-            // If the Google account already exists, we can't link it to the anonymous account.
-            // We just log them into their existing Google account instead.
-            await signInWithPopup(auth, googleProvider);
+            // Instantly log them in using the credential they just provided in the popup!
+            const credential = GoogleAuthProvider.credentialFromError(linkErr);
+            if (credential) {
+              await signInWithCredential(auth, credential);
+              handleClose();
+            } else {
+              setForceSignIn(true);
+              setError("Account exists! Click Google again to log in.");
+            }
           } else {
-            throw linkErr; // Re-throw if it's a different error
+            throw linkErr;
           }
         }
       } else {
         await signInWithPopup(auth, googleProvider);
+        handleClose();
       }
-      handleClose();
     } catch (err: any) {
       console.error(err);
-      setError(err.message || "Failed to sign in with Google.");
+      if (err.code !== "auth/popup-closed-by-user" && err.code !== "auth/cancelled-popup-request") {
+        setError(err.message || "Failed to sign in with Google.");
+      }
     } finally {
       setIsLoading(false);
     }
