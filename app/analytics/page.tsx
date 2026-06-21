@@ -5,7 +5,7 @@ import {
   PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip, 
   BarChart, Bar, XAxis, YAxis, CartesianGrid 
 } from "recharts";
-import { Briefcase, CheckCircle2, XCircle, Clock } from "lucide-react";
+import { Briefcase, CheckCircle2, XCircle, Clock, Users } from "lucide-react";
 
 const COLORS = {
   Applied: "#64748b",      // slate-500
@@ -17,13 +17,14 @@ const COLORS = {
 };
 
 export default function AnalyticsPage() {
-  const { jobs } = useStore();
+  const { jobs, contacts } = useStore();
 
   // Calculate top-level stats
   const totalApplied = jobs.length;
   const totalInterviewing = jobs.filter(j => j.status === "Interviewing" || j.status === "Tech Test").length;
   const totalOffers = jobs.filter(j => j.status === "Offer").length;
   const totalRejected = jobs.filter(j => j.status === "Rejected").length;
+  const totalNetwork = contacts.length;
 
   // Calculate Pipeline Distribution for Pie Chart
   const statusCounts = jobs.reduce((acc, job) => {
@@ -58,7 +59,7 @@ export default function AnalyticsPage() {
       </header>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
         <div className="bg-surface border border-border p-5 rounded-xl shadow-sm flex flex-col justify-between h-32">
           <div className="flex justify-between items-start">
             <span className="text-text-secondary font-medium">Total Saved</span>
@@ -97,6 +98,16 @@ export default function AnalyticsPage() {
             </div>
           </div>
           <span className="text-3xl font-bold text-danger">{totalRejected}</span>
+        </div>
+
+        <div className="bg-surface border border-border p-5 rounded-xl shadow-sm flex flex-col justify-between h-32">
+          <div className="flex justify-between items-start">
+            <span className="text-text-secondary font-medium">Network</span>
+            <div className="p-2 bg-accent/10 rounded-md text-accent">
+              <Users className="w-4 h-4" />
+            </div>
+          </div>
+          <span className="text-3xl font-bold text-accent">{totalNetwork}</span>
         </div>
       </div>
 

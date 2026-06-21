@@ -14,7 +14,7 @@ type ContactFormData = {
 };
 
 export function AddContactModal() {
-  const { isAddContactModalOpen, setAddContactModalOpen } = useStore();
+  const { isAddContactModalOpen, setAddContactModalOpen, contacts, setContacts } = useStore();
   const { register, handleSubmit, reset } = useForm<ContactFormData>();
 
   if (!isAddContactModalOpen) return null;
@@ -25,7 +25,18 @@ export function AddContactModal() {
   };
 
   const onSubmit = (data: ContactFormData) => {
-    console.log("Saving contact:", data);
+    const newContact = {
+      id: Math.random().toString(36).substring(2, 9),
+      name: data.name,
+      title: data.title,
+      company: data.company,
+      linkedinUrl: data.linkedinUrl, // Optional property, depending on interface
+      status: data.status || "Identified",
+      type: data.type || "Recruiter",
+      lastContact: new Date().toISOString().split("T")[0], // Today's date (YYYY-MM-DD)
+    };
+
+    setContacts([...contacts, newContact]);
     handleClose();
   };
 
