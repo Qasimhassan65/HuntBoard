@@ -31,10 +31,16 @@ export function AddJobModal() {
   useEffect(() => {
     if (isAddJobModalOpen && selectedJob) {
       setValue("companyName", selectedJob.companyName || "");
+      setValue("companySize", selectedJob.companySize || "");
+      setValue("industry", selectedJob.industry || "");
       // Mock other fields that aren't fully tracked yet to prevent undefined
       setValue("jobTitle", selectedJob.jobTitle || "");
       setValue("techStack", selectedJob.techStack?.join(", ") || "");
       setValue("country", selectedJob.countryFlag || "");
+      setValue("remotePolicy", selectedJob.remotePolicy || "");
+      setValue("salaryRange", selectedJob.salaryRange || "");
+      setValue("source", selectedJob.source || "");
+      setValue("jobUrl", selectedJob.jobUrl || "");
       setValue("status", selectedJob.status || "Wishlist");
     } else if (isAddJobModalOpen) {
       reset();
@@ -94,20 +100,32 @@ export function AddJobModal() {
       updateJob({
         ...selectedJob,
         companyName: data.companyName,
+        companySize: data.companySize,
+        industry: data.industry,
         jobTitle: data.jobTitle,
         status: data.status,
         techStack: data.techStack ? data.techStack.split(",").map(t => t.trim()).filter(Boolean) : [],
-        countryFlag: data.country
+        countryFlag: data.country,
+        remotePolicy: data.remotePolicy,
+        salaryRange: data.salaryRange,
+        source: data.source,
+        jobUrl: data.jobUrl
       });
     } else {
       const newJob = {
         id: Date.now().toString(),
         companyName: data.companyName,
+        companySize: data.companySize,
+        industry: data.industry,
         jobTitle: data.jobTitle,
         status: data.status || "Wishlist", // Default to Wishlist column
         techStack: data.techStack ? data.techStack.split(",").map(t => t.trim()).filter(Boolean) : [],
         dateApplied: new Date().toLocaleDateString(),
         countryFlag: data.country,
+        remotePolicy: data.remotePolicy,
+        salaryRange: data.salaryRange,
+        source: data.source,
+        jobUrl: data.jobUrl,
         notes: ""
       };
       

@@ -12,6 +12,12 @@ export interface Job {
   techStack?: string[];
   dateApplied?: string;
   notes?: string;
+  companySize?: string;
+  industry?: string;
+  remotePolicy?: string;
+  salaryRange?: string;
+  source?: string;
+  jobUrl?: string;
 }
 
 export interface ContactNote {
